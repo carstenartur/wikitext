@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Sample to show how to generate eclipse help plugin based on mediawiki content
+   Carsten Hammer
+   carsten.hammer@t-online.de
+ -->
+<project name="mylyn-docs-wikitest" default="all">
+	<description>
+            Generate Eclipse help content from the mediawiki server
+		    http://www.mediawiki.org/wiki/api.php
+    </description>
+	<path id="wikitext.tasks.classpath">
+		<fileset dir="lib">
+			<include name="org.eclipse.mylyn.wikitext.*core*.jar" />
+		</fileset>
+	</path>
+	<property name="wikitext.standalone" value="" />
+	<!-- path to wikitext standalone package -->
+	<path id="wikitext.classpath">
+		<fileset dir="${wikitext.standalone}">
+			<include name="org.eclipse.mylyn.wikitext.*core*.jar" />
+		</fileset>
+	</path>
+
+	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties" />
+	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties" />
+
+	<target name="clean">
+		<delete failonerror="false">
+			<fileset dir="tmp" includes="**/*" />
+			<fileset file="build-doc-enhanced.xml" />
+			<fileset file="build-doc-enhanced-pull.xml" />
+			<fileset file="build-doc-test-mediawiki-enhanced.xml" />
+		</delete>
+		<delete dir="nl" />
+	</target>
+
+	<target name="init" depends="clean">
+		<mkdir dir="tmp" />
+		<!--
+				There are two sources of the content of book.css:
+				
+				http://wiki.eclipse.org/index.php/MediaWiki:Common.css
+				http://wiki.eclipse.org/index.php/MediaWiki:Geshi.css
+				-->
+		<copy file="${basedir}/book.css" tofile="${basedir}/nl/en/book.css" overwrite="true" />
+		<copy file="${basedir}/book.css" tofile="${basedir}/nl/de/book.css" overwrite="true" />
+	</target>
+
+	<!-- ================================= 
+		          target: pull  the page lists from wiki through the use of the mediawiki api         
+		          
+		          sample url:
+		          
+		          http://wiki.eclipse.org/api.php?action=query&list=categorymembers&cmtitle=Category:Mylyn&cmlimit=150&format=xml
+		             
+		          Dokumentation:
+		             
+		          http://www.mediawiki.org/wiki/API:Query   
+		             
+		         ================================= -->
+	<target name="pull">
+		<!-- -To be filled by pagelist2ant.xsl -->
+	</target>
+
+	<!--
+			now run the stylesheet to create a new ant build file by using the xml list pulled in the step before to insert path entries. The ant build file is based on 
+			this build file but all path entries are removed and created again according to the lists.
+	-->
+	<target name="pullhelppagelistfromwiki" depends="init">
+		<xslt basedir="" in="build-doc-test-mediawiki.xml" out="build-doc-enhanced-pull.xml" style="injectpulllist.xsl">
+			<factory name="net.sf.saxon.TransformerFactoryImpl" />
+			<classpath location="lib/saxon-9.1.0.6j.jar" />
+		</xslt>
+		<ant antfile="build-doc-enhanced-pull.xml" target="pull" />
+		<xslt basedir="" in="build-doc-enhanced-pull.xml" out="build-doc-enhanced.xml" style="pagelist2ant.xsl">
+			<factory name="net.sf.saxon.TransformerFactoryImpl" />
+			<classpath location="lib/saxon-9.1.0.6j.jar" />
+		</xslt>
+		<ant antfile="build-doc-enhanced.xml" target="generate-online-help" />
+	</target>
+
+	<target name="all" depends="pullhelppagelistfromwiki" />
+
+	<target name="generate-online-help" description="Generate Eclipse help from mediawiki source">
+		<mediawiki-to-eclipse-help wikiBaseUrl="http://wiki.eclipse.org/" validate="true" helpPrefix="nl/en" failonvalidationerror="true" prependImagePrefix="images" formatoutput="true" defaultAbsoluteLinkTarget="mylyn_external" linkRel="" multipleOutputFiles="false" dest="${basedir}/nl/en" title="Zest" tocFile="${basedir}/nl/en/Zest_toc.xml" internalLinkPattern="../{0}" generateUnifiedToc="true" navigationImages="false">
+			<stylesheet url="book.css" />
+		</mediawiki-to-eclipse-help>
+		<mediawiki-to-eclipse-help wikiBaseUrl="http://wiki.eclipse.org/" validate="true" helpPrefix="nl/en" failonvalidationerror="true" prependImagePrefix="images" formatoutput="true" defaultAbsoluteLinkTarget="mylyn_external" linkRel="" multipleOutputFiles="false" dest="${basedir}/nl/en" title="Eclipse4" tocFile="${basedir}/nl/en/eclipse4_toc.xml" internalLinkPattern="../{0}" generateUnifiedToc="true" navigationImages="false">
+			<stylesheet url="book.css" />
+		</mediawiki-to-eclipse-help>
+		<!-- create the toc -->
+		<xslt basedir="nl/en" in="build-doc-test-mediawiki.xml" out="nl/en/zest_toc.xml" style="create_Tocs.xsl">
+			<param name="language" expression="en" />
+			<param name="header" expression="Zest" />
+			<param name="tocname" expression="zest" />
+			<factory name="net.sf.saxon.TransformerFactoryImpl" />
+			<classpath location="lib/saxon-9.1.0.6j.jar" />
+		</xslt>
+		<xslt basedir="nl/en" in="build-doc-test-mediawiki.xml" out="nl/en/eclipse4_toc.xml" style="create_Tocs.xsl">
+			<param name="language" expression="en" />
+			<param name="header" expression="Eclipse4" />
+			<param name="tocname" expression="eclipse4" />
+			<factory name="net.sf.saxon.TransformerFactoryImpl" />
+			<classpath location="lib/saxon-9.1.0.6j.jar" />
+		</xslt>
+		<!-- we copy the english tocs to root - so we have the chapters for the default language en-->
+		<copy file="${basedir}/nl/en/zest_toc.xml" tofile="${basedir}/zest_toc.xml" overwrite="true" />
+		<copy file="${basedir}/nl/en/eclipse4_toc.xml" tofile="${basedir}/eclipse4_toc.xml" overwrite="true" />
+	</target>
+</project>
