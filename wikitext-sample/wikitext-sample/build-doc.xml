@@ -24,13 +24,14 @@
 
 	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties" />
 	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties" />
+	<!-- add the ant tasks from ant-contrib -->
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
 
 	<target name="clean">
 		<delete failonerror="false">
 			<fileset dir="tmp" includes="**/*" />
-			<fileset file="build-doc-enhanced.xml" />
-			<fileset file="build-doc-enhanced-pull.xml" />
-			<fileset file="build-doc-test-mediawiki-enhanced.xml" />
+			<fileset file="build-doc-pull.xml" />
+			<fileset file="build-doc-pull-enhanced.xml" />
 		</delete>
 		<delete dir="nl" />
 	</target>
@@ -68,44 +69,26 @@
 			this build file but all path entries are removed and created again according to the lists.
 	-->
 	<target name="pullhelppagelistfromwiki" depends="init">
-		<xslt basedir="" in="build-doc-test-mediawiki.xml" out="build-doc-enhanced-pull.xml" style="injectpulllist.xsl">
+		<xslt basedir="" in="build-doc.xml" out="build-doc-pull.xml" style="injectpulllist.xsl">
 			<factory name="net.sf.saxon.TransformerFactoryImpl" />
 			<classpath location="lib/saxon-9.1.0.6j.jar" />
 		</xslt>
-		<ant antfile="build-doc-enhanced-pull.xml" target="pull" />
-		<xslt basedir="" in="build-doc-enhanced-pull.xml" out="build-doc-enhanced.xml" style="pagelist2ant.xsl">
+		<ant antfile="build-doc-pull.xml" target="pull" />
+		<!-- 
+		now we have lists of all pages for requested categories in files "tmp/*_list.xml" 
+		as next step we need to inject these pages that belong to a category and have to be pulled
+		from the wikiserver to the ant build file task
+		      -->
+		<xslt basedir="" in="build-doc-pull.xml" out="build-doc-pull-enhanced.xml" style="pagelist2ant.xsl">
 			<factory name="net.sf.saxon.TransformerFactoryImpl" />
 			<classpath location="lib/saxon-9.1.0.6j.jar" />
 		</xslt>
-		<ant antfile="build-doc-enhanced.xml" target="generate-online-help" />
+		<ant antfile="build-doc-pull-enhanced.xml" target="generate-online-help" />
 	</target>
 
 	<target name="all" depends="pullhelppagelistfromwiki" />
 
 	<target name="generate-online-help" description="Generate Eclipse help from mediawiki source">
-		<mediawiki-to-eclipse-help wikiBaseUrl="http://wiki.eclipse.org/" validate="true" helpPrefix="nl/en" failonvalidationerror="true" prependImagePrefix="images" formatoutput="true" defaultAbsoluteLinkTarget="mylyn_external" linkRel="" multipleOutputFiles="false" dest="${basedir}/nl/en" title="Zest" tocFile="${basedir}/nl/en/Zest_toc.xml" internalLinkPattern="../{0}" generateUnifiedToc="true" navigationImages="false">
-			<stylesheet url="book.css" />
-		</mediawiki-to-eclipse-help>
-		<mediawiki-to-eclipse-help wikiBaseUrl="http://wiki.eclipse.org/" validate="true" helpPrefix="nl/en" failonvalidationerror="true" prependImagePrefix="images" formatoutput="true" defaultAbsoluteLinkTarget="mylyn_external" linkRel="" multipleOutputFiles="false" dest="${basedir}/nl/en" title="Eclipse4" tocFile="${basedir}/nl/en/eclipse4_toc.xml" internalLinkPattern="../{0}" generateUnifiedToc="true" navigationImages="false">
-			<stylesheet url="book.css" />
-		</mediawiki-to-eclipse-help>
-		<!-- create the toc -->
-		<xslt basedir="nl/en" in="build-doc-test-mediawiki.xml" out="nl/en/zest_toc.xml" style="create_Tocs.xsl">
-			<param name="language" expression="en" />
-			<param name="header" expression="Zest" />
-			<param name="tocname" expression="zest" />
-			<factory name="net.sf.saxon.TransformerFactoryImpl" />
-			<classpath location="lib/saxon-9.1.0.6j.jar" />
-		</xslt>
-		<xslt basedir="nl/en" in="build-doc-test-mediawiki.xml" out="nl/en/eclipse4_toc.xml" style="create_Tocs.xsl">
-			<param name="language" expression="en" />
-			<param name="header" expression="Eclipse4" />
-			<param name="tocname" expression="eclipse4" />
-			<factory name="net.sf.saxon.TransformerFactoryImpl" />
-			<classpath location="lib/saxon-9.1.0.6j.jar" />
-		</xslt>
-		<!-- we copy the english tocs to root - so we have the chapters for the default language en-->
-		<copy file="${basedir}/nl/en/zest_toc.xml" tofile="${basedir}/zest_toc.xml" overwrite="true" />
-		<copy file="${basedir}/nl/en/eclipse4_toc.xml" tofile="${basedir}/eclipse4_toc.xml" overwrite="true" />
+		<!-- -To be filled by injectpulllist.xsl -->
 	</target>
 </project>

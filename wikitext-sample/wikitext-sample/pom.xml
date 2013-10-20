@@ -48,7 +48,7 @@
 							<echo>Generating documentation</echo>
 							<tasks>
 								<property refid="maven.compile.classpath" name="compile_classpath" />
-								<ant antfile="build-doc-test-mediawiki.xml" inheritRefs="true">
+								<ant antfile="build-doc.xml" inheritRefs="true">
 									<target name="all" />
 								</ant>
 							</tasks>
@@ -69,6 +69,11 @@
 						<artifactId>ant-launcher</artifactId>
 						<version>1.9.2</version>
 					</dependency>
+					 <dependency>
+                    <groupId>ant-contrib</groupId>
+                    <artifactId>ant-contrib</artifactId>
+                    <version>20020829</version>
+                </dependency>
 					<dependency>
 						<groupId>xalan</groupId>
 						<artifactId>xalan</artifactId>

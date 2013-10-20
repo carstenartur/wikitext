@@ -14,5 +14,11 @@
               file="eclipse4_toc.xml"
               primary="true">
       </toc>
+      <toc
+              category="GEF"
+              extradir="GEF"
+              file="GEF_toc.xml"
+              primary="true">
+      </toc>
    </extension>
 </plugin>
