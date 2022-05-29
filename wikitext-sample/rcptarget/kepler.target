@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?><target includeMode="feature" name="Target Platform for the COSMOS Client RCP Project" sequenceNumber="40">
+<locations>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="false" type="InstallableUnit">
+<unit id="org.eclipse.help" version="0.0.0"/>
+<unit id="org.eclipse.wst.xml_ui.feature.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.equinox.p2.user.ui.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.gef.sdk.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.zest.feature.group" version="0.0.0"/>
+<repository location="http://download.eclipse.org/releases/kepler"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="false" type="InstallableUnit">
+<unit id="org.eclipse.emf.ecore.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.emf.common.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
+<repository location="http://download.eclipse.org/eclipse/updates/4.3"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="false" type="InstallableUnit">
+<unit id="org.eclipse.babel.nls_eclipse_de.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.babel.nls_tools.cdt_de.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.babel.nls_eclipse_fr.feature.group" version="0.0.0"/>
+<unit id="org.eclipse.babel.nls_tools.cdt_fr.feature.group" version="0.0.0"/>
+<repository location="http://download.eclipse.org/technology/babel/update-site/R0.12.0/kepler"/>
+</location>
+</locations>
+</target>
