@@ -174,12 +174,12 @@
 				<repository>
 					<id>kepler</id>
 					<layout>p2</layout>
-					<url>http://download.eclipse.org/releases/kepler/</url>
+					<url>https://archive.eclipse.org/releases/kepler/</url>
 				</repository>
 				<repository>
 					<id>babel</id>
 					<layout>p2</layout>
-					<url>http://download.eclipse.org/technology/babel/update-site/R0.11.0/kepler</url>
+					<url>https://archive.eclipse.org/technology/babel/update-site/R0.11.0/kepler/</url>
 				</repository>
 			</repositories>
 		</profile>
@@ -195,12 +195,12 @@
 				<repository>
 					<id>indigo</id>
 					<layout>p2</layout>
-					<url>http://download.eclipse.org/releases/indigo/</url>
+					<url>https://archive.eclipse.org/releases/indigo/</url>
 				</repository>
 				<repository>
 					<id>babel</id>
 					<layout>p2</layout>
-					<url>http://download.eclipse.org/technology/babel/update-site/R0.11.0/indigo</url>
+					<url>https://archive.eclipse.org/technology/babel/update-site/R0.11.0/indigo</url>
 				</repository>
 			</repositories>
 		</profile>
