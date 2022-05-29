@@ -3,15 +3,9 @@
    <extension
          point="org.eclipse.help.toc">
        <toc
-              category="Zest"
-              extradir="Zest"
-              file="zest_toc.xml"
-              primary="true">
-      </toc>
-       <toc
               category="Eclipse4"
               extradir="Eclipse4"
-              file="eclipse4_toc.xml"
+              file="Eclipse4_toc.xml"
               primary="true">
       </toc>
       <toc
