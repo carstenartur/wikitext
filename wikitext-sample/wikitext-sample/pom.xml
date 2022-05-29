@@ -163,6 +163,48 @@
 	</build>
 	<profiles>
 		<profile>
+			<id>oxygen</id>
+			<activation>
+				<property>
+					<name>rcpversion</name>
+					<value>oxygen</value>
+				</property>
+			</activation>
+			<repositories>
+				<repository>
+					<id>oxygen</id>
+					<layout>p2</layout>
+					<url>https://archive.eclipse.org/releases/oxygen/</url>
+				</repository>
+				<repository>
+					<id>babel</id>
+					<layout>p2</layout>
+					<url>https://archive.eclipse.org/technology/babel/update-site/R0.11.0/oxygen/</url>
+				</repository>
+			</repositories>
+		</profile>
+		<profile>
+			<id>neon</id>
+			<activation>
+				<property>
+					<name>rcpversion</name>
+					<value>neon</value>
+				</property>
+			</activation>
+			<repositories>
+				<repository>
+					<id>neon</id>
+					<layout>p2</layout>
+					<url>https://archive.eclipse.org/releases/neon/</url>
+				</repository>
+				<repository>
+					<id>babel</id>
+					<layout>p2</layout>
+					<url>https://archive.eclipse.org/technology/babel/update-site/R0.11.0/neon/</url>
+				</repository>
+			</repositories>
+		</profile>
+		<profile>
 			<id>kepler</id>
 			<activation>
 				<property>
