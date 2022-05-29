@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>org.hammer</groupId>
+		<artifactId>wikitext</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
 	<groupId>org.hammer</groupId>
 	<artifactId>wikitext-sample</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<name>wikitext-sample</name>
-	
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<tycho-version>0.18.1</tycho-version>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -69,11 +68,11 @@
 						<artifactId>ant-launcher</artifactId>
 						<version>1.10.12</version>
 					</dependency>
-					 <dependency>
-                    <groupId>ant-contrib</groupId>
-                    <artifactId>ant-contrib</artifactId>
-                    <version>20020829</version>
-                </dependency>
+					<dependency>
+						<groupId>ant-contrib</groupId>
+						<artifactId>ant-contrib</artifactId>
+						<version>20020829</version>
+					</dependency>
 					<dependency>
 						<groupId>xalan</groupId>
 						<artifactId>xalan</artifactId>
@@ -101,8 +100,9 @@
 				<configuration>
 					<target>
 						<artifact>
-							<groupId>com.oce.cosmos</groupId>
-							<artifactId>cosmosrcp.target</artifactId>
+							<groupId>org.hammer</groupId>
+							<artifactId>rcptarget</artifactId>
+							<version>0.0.1-SNAPSHOT</version>
 							<classifier>${rcpversion}</classifier>
 						</artifact>
 					</target>
