@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: wikitext sample help Plug-in
 Bundle-SymbolicName: wikitext-sample;singleton:=true
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0.qualifier
 Bundle-Vendor: Carsten Hammer
 Require-Bundle: org.eclipse.help,
  org.apache.ant
