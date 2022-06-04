@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.hammer</groupId>
 		<artifactId>wikitext</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>rcptarget</artifactId>

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.hammer</groupId>
 		<artifactId>wikitext</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>wikitext-sample</artifactId>
@@ -30,7 +30,9 @@
 		</developer>
 	</developers>
 	<build>
+	<!-- 
 		<finalName>org.hammer.wikitextsample-1.0.0</finalName>
+		-->
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -92,7 +94,7 @@
 						<artifact>
 							<groupId>org.hammer</groupId>
 							<artifactId>rcptarget</artifactId>
-							<version>0.0.1-SNAPSHOT</version>
+							<version>1.0.0</version>
 							<classifier>${rcpversion}</classifier>
 						</artifact>
 					</target>
