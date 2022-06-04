@@ -4,9 +4,9 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	version="2.0" xmlns:categories="http://dummy/categories"
 	exclude-result-prefixes="categories">
-	<!-- These are all categories that are pulled from the mediawiki server
-	<categories:category>Zest</categories:category> -->
-	<categories:category>Eclipse4</categories:category>
+	<!-- These are all categories that are pulled from the mediawiki server  
+	<categories:category>JDT</categories:category>
+	<categories:category>Eclipse4</categories:category>-->
 	<categories:category>GEF</categories:category>
 	<xsl:output method="xml" indent="yes" name="plugin"
 		standalone="yes" xmlns:categories="http://dummy/categories"

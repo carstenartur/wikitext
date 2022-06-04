@@ -14,5 +14,11 @@
               file="GEF_toc.xml"
               primary="true">
       </toc>
+      <toc
+              category="JDT"
+              extradir="JDT"
+              file="JDT_toc.xml"
+              primary="true">
+      </toc>
    </extension>
 </plugin>

@@ -6,16 +6,15 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>wikitext</name>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<tycho-version>2.7.3</tycho-version>
+		<java.version>11</java.version>
 	</properties>
 	<modules>
 		<module>wikitext-sample</module>
 		<module>rcptarget</module>
 	</modules>
-
 	<developers>
 		<developer>
 			<id>chammer</id>
@@ -23,7 +22,9 @@
 			<email>carsten.hammer@t-online.de</email>
 		</developer>
 	</developers>
-	<build><plugins><!-- enable tycho build extension -->
+	<build>
+		<plugins>
+			<!-- enable tycho build extension -->
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-maven-plugin</artifactId>
@@ -33,7 +34,9 @@
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 				</configuration>
-			</plugin></plugins></build>
+			</plugin>
+		</plugins>
+	</build>
 	<profiles>
 		<profile>
 			<id>2021-12</id>
