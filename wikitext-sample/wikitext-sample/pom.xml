@@ -13,7 +13,9 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<name>wikitext-sample</name>
-
+	<properties>
+		<java.version>11</java.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.ant</groupId>
@@ -91,6 +93,10 @@
 				<artifactId>tycho-maven-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<extensions>true</extensions>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
 			</plugin>
 			<!-- configure the p2 target environments for multi-platform build -->
 			<plugin>
@@ -106,16 +112,12 @@
 							<classifier>${rcpversion}</classifier>
 						</artifact>
 					</target>
+					<!-- 
 					<dependency-resolution>
 						<extraRequirements>
 							<requirement>
 								<type>p2-installable-unit</type>
 								<id>org.eclipse.equinox.simpleconfigurator</id>
-								<versionRange>0.0.0</versionRange>
-							</requirement>
-							<requirement>
-								<type>p2-installable-unit</type>
-								<id>org.eclipse.equinox.p2.user.ui.feature.group</id>
 								<versionRange>0.0.0</versionRange>
 							</requirement>
 							<requirement>
@@ -130,6 +132,7 @@
 							</requirement>
 						</extraRequirements>
 					</dependency-resolution>
+					-->
 					<environments>
 						<environment>
 							<os>linux</os>
@@ -166,11 +169,6 @@
 					<layout>p2</layout>
 					<url>https://download.eclipse.org/releases/2021-12/</url>
 				</repository>
-				<repository>
-					<id>babel</id>
-					<layout>p2</layout>
-					<url>https://download.eclipse.org/technology/babel/update-site/R0.19.2/2021-12/</url>
-				</repository>
 			</repositories>
 		</profile>
 		<profile>
@@ -186,11 +184,6 @@
 					<id>photon</id>
 					<layout>p2</layout>
 					<url>https://archive.eclipse.org/releases/photon/</url>
-				</repository>
-				<repository>
-					<id>babel</id>
-					<layout>p2</layout>
-					<url>https://archive.eclipse.org/technology/babel/update-site/R0.16.0/photon/</url>
 				</repository>
 			</repositories>
 		</profile>
@@ -208,11 +201,6 @@
 					<layout>p2</layout>
 					<url>https://archive.eclipse.org/releases/oxygen/</url>
 				</repository>
-				<repository>
-					<id>babel</id>
-					<layout>p2</layout>
-					<url>https://archive.eclipse.org/technology/babel/update-site/R0.16.0/oxygen/</url>
-				</repository>
 			</repositories>
 		</profile>
 		<profile>
@@ -228,11 +216,6 @@
 					<id>neon</id>
 					<layout>p2</layout>
 					<url>https://archive.eclipse.org/releases/neon/</url>
-				</repository>
-				<repository>
-					<id>babel</id>
-					<layout>p2</layout>
-					<url>https://archive.eclipse.org/technology/babel/update-site/R0.16.0/neon/</url>
 				</repository>
 			</repositories>
 		</profile>
@@ -250,11 +233,6 @@
 					<layout>p2</layout>
 					<url>https://archive.eclipse.org/releases/kepler/</url>
 				</repository>
-				<repository>
-					<id>babel</id>
-					<layout>p2</layout>
-					<url>https://archive.eclipse.org/technology/babel/update-site/R0.11.0/kepler/</url>
-				</repository>
 			</repositories>
 		</profile>
 		<profile>
@@ -270,11 +248,6 @@
 					<id>indigo</id>
 					<layout>p2</layout>
 					<url>https://archive.eclipse.org/releases/indigo/</url>
-				</repository>
-				<repository>
-					<id>babel</id>
-					<layout>p2</layout>
-					<url>https://archive.eclipse.org/technology/babel/update-site/R0.11.0/indigo</url>
 				</repository>
 			</repositories>
 		</profile>
