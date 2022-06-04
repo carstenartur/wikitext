@@ -15,12 +15,5 @@
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
 <repository location="https://download.eclipse.org/eclipse/updates/4.7"/>
 </location>
-<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="slicer" includeSource="false" type="InstallableUnit">
-<unit id="org.eclipse.babel.nls_eclipse_de.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.babel.nls_tools.cdt_de.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.babel.nls_eclipse_fr.feature.group" version="0.0.0"/>
-<unit id="org.eclipse.babel.nls_tools.cdt_fr.feature.group" version="0.0.0"/>
-<repository location="https://archive.eclipse.org/technology/babel/update-site/R0.16.0/oxygen/"/>
-</location>
 </locations>
 </target>
