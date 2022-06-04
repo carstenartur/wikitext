@@ -12,3 +12,8 @@ Test
 mvn -Drcpversion=2022-03 package
 
 Then copy org.hammer.wikitextsample-1.0.0.jar to your eclipse "dropins" folder and start and check help->help contents->GEF
+
+Change Version
+========
+
+mvn org.eclipse.tycho:tycho-versions-plugin:set-version -Drcpversion=2022-03 -DnewVersion=1.0.0
