@@ -6,15 +6,15 @@
 		<groupId>org.hammer</groupId>
 		<artifactId>wikitext</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
-	<groupId>org.hammer</groupId>
 	<artifactId>wikitext-sample</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<name>wikitext-sample</name>
 	<properties>
 		<java.version>11</java.version>
+		<tycho-version>2.7.3</tycho-version>
 	</properties>
 	<dependencies>
 		<dependency>
