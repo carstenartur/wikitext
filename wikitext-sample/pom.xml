@@ -23,7 +23,17 @@
 			<email>carsten.hammer@t-online.de</email>
 		</developer>
 	</developers>
-	<build></build>
+	<build><plugins><!-- enable tycho build extension -->
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-maven-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
+			</plugin></plugins></build>
 	<profiles>
 		<profile>
 			<id>2021-12</id>

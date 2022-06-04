@@ -87,17 +87,7 @@
 					</dependency>
 				</dependencies>
 			</plugin>
-			<!-- enable tycho build extension -->
-			<plugin>
-				<groupId>org.eclipse.tycho</groupId>
-				<artifactId>tycho-maven-plugin</artifactId>
-				<version>${tycho-version}</version>
-				<extensions>true</extensions>
-				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-				</configuration>
-			</plugin>
+			
 			<!-- configure the p2 target environments for multi-platform build -->
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
