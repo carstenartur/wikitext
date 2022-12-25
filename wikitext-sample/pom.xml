@@ -39,6 +39,27 @@
 	</build>
 	<profiles>
 		<profile>
+			<id>2022-03</id>
+			<activation>
+				<property>
+					<name>rcpversion</name>
+					<value>2022-03</value>
+				</property>
+			</activation>
+			<repositories>
+				<repository>
+					<id>2022-03</id>
+					<layout>p2</layout>
+					<url>https://download.eclipse.org/releases/2022-03/</url>
+				</repository>
+				<repository>
+					<id>babel</id>
+					<layout>p2</layout>
+					<url>https://download.eclipse.org/technology/babel/update-site/R0.19.2/2021-12/</url>
+				</repository>
+			</repositories>
+		</profile>
+		<profile>
 			<id>2021-12</id>
 			<activation>
 				<property>
