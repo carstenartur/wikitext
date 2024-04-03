@@ -42,6 +42,7 @@
 						<id>generate-documentation</id>
 						<phase>generate-sources</phase>
 						<configuration>
+							<target>
 							<echo>Generating documentation</echo>
 							<tasks>
 								<property refid="maven.compile.classpath" name="compile_classpath" />
@@ -49,6 +50,7 @@
 									<target name="all" />
 								</ant>
 							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>
