@@ -43,7 +43,7 @@
 						<id>generate-documentation</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<target name="The name of the target">
+							<target name="generator">
 							<echo>Generating documentation</echo>
 							<tasks>
 								<property refid="maven.compile.classpath" name="compile_classpath" />
