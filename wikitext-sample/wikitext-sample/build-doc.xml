@@ -7,7 +7,8 @@
 <project name="wikitext-help" default="all">
     <path id="wikitext.tasks.classpath">
         <fileset dir="lib">
-            <include name="org.eclipse.mylyn.wikitext.*core*.jar"/>
+            <include name="org.eclipse.mylyn.wikitext.core_*.jar"/>
+            <include name="org.eclipse.mylyn.wikitext.mediawiki.core*.jar"/>
         </fileset>
     </path>
 
