@@ -1,6 +1,8 @@
 package org.hammer.wikihelp.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -53,6 +55,40 @@ public final class HttpTransport {
         return result;
     }
 
+    public HttpBinaryResponseData getBytes(
+            URI uri,
+            Map<String, String> headers,
+            int maxBytes) throws IOException, InterruptedException {
+        if (maxBytes <= 0) throw new IllegalArgumentException("maxBytes must be positive");
+
+        HttpRequest.Builder request = HttpRequest.newBuilder(uri)
+                .timeout(timeout)
+                .header("Accept", "*/*")
+                .header("User-Agent", userAgent)
+                .GET();
+        headers.forEach(request::header);
+
+        HttpResponse<InputStream> response = client.send(
+                request.build(),
+                HttpResponse.BodyHandlers.ofInputStream());
+        try (InputStream body = response.body()) {
+            long contentLength = response.headers().firstValueAsLong("Content-Length").orElse(-1);
+            if (contentLength > maxBytes) {
+                throw new IOException(
+                        "Response exceeds attachment limit of " + maxBytes + " bytes for " + uri);
+            }
+            byte[] bytes = readLimited(body, maxBytes);
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                String message = new String(bytes, StandardCharsets.UTF_8).replaceAll("\\s+", " ");
+                if (message.length() > 400) message = message.substring(0, 400) + "...";
+                throw new IOException(
+                        "HTTP " + response.statusCode() + " for " + uri + ": " + message);
+            }
+            return new HttpBinaryResponseData(
+                    response.statusCode(), bytes, response.headers().map());
+        }
+    }
+
     public Object getJson(URI uri, Map<String, String> headers) throws IOException, InterruptedException {
         return Json.parse(get(uri, headers).body());
     }
@@ -101,6 +137,21 @@ public final class HttpTransport {
         Map<String, String> result = new LinkedHashMap<>(first);
         result.putAll(second);
         return Map.copyOf(result);
+    }
+
+    private static byte[] readLimited(InputStream input, int maxBytes) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream(Math.min(maxBytes, 8192));
+        byte[] buffer = new byte[8192];
+        int total = 0;
+        int read;
+        while ((read = input.read(buffer)) >= 0) {
+            total += read;
+            if (total > maxBytes) {
+                throw new IOException("Response exceeds attachment limit of " + maxBytes + " bytes");
+            }
+            output.write(buffer, 0, read);
+        }
+        return output.toByteArray();
     }
 
     private static String encode(String value) {

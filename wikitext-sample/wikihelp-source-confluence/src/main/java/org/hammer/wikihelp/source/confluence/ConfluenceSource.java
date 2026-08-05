@@ -1,5 +1,6 @@
 package org.hammer.wikihelp.source.confluence;
 
+import org.hammer.wikihelp.core.AttachmentRequest;
 import org.hammer.wikihelp.core.HttpTransport;
 import org.hammer.wikihelp.core.Json;
 import org.hammer.wikihelp.core.MarkupFormat;
@@ -56,6 +57,14 @@ public final class ConfluenceSource implements WikiSource {
             next = link == null || link.isBlank() ? null : URI.create(baseUrl).resolve(link);
         }
         return List.copyOf(result);
+    }
+
+    @Override
+    public Map<String, String> attachmentHeaders(
+            SourceConfiguration configuration,
+            WikiPage page,
+            AttachmentRequest request) {
+        return authentication(configuration);
     }
 
     private Map<String, String> authentication(SourceConfiguration configuration) {

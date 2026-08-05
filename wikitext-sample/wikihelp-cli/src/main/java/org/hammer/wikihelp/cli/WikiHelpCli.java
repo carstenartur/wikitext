@@ -1,5 +1,6 @@
 package org.hammer.wikihelp.cli;
 
+import org.hammer.wikihelp.core.AttachmentSynchronizer;
 import org.hammer.wikihelp.core.HttpTransport;
 import org.hammer.wikihelp.core.PageCache;
 import org.hammer.wikihelp.core.PageSelection;
@@ -41,6 +42,7 @@ public final class WikiHelpCli {
         SourceRegistry registry = SourceRegistry.load();
         HttpTransport transport = new HttpTransport();
         PageCache cache = new PageCache();
+        AttachmentSynchronizer attachmentSynchronizer = new AttachmentSynchronizer();
         List<WikiPage> pages = new ArrayList<>();
 
         for (SourceConfiguration sourceConfiguration : configuration.sources()) {
@@ -50,25 +52,31 @@ public final class WikiHelpCli {
 
             if (!source.remote()) {
                 sourcePages = source.fetch(sourceConfiguration, selection, transport);
+                sourcePages = attachmentSynchronizer.synchronize(
+                        source, sourceConfiguration, sourcePages, transport);
                 cache.store(cacheDirectory, sourceConfiguration.id(), sourcePages);
-                System.out.printf("WikiHelp: %s loaded %d local page(s)%n",
-                        sourceConfiguration.id(), sourcePages.size());
+                System.out.printf("WikiHelp: %s loaded %d local page(s) and %d attachment(s)%n",
+                        sourceConfiguration.id(), sourcePages.size(), attachmentCount(sourcePages));
             } else if (mode == WikiHelpConfiguration.Mode.ONLINE) {
                 sourcePages = source.fetch(sourceConfiguration, selection, transport);
+                sourcePages = attachmentSynchronizer.synchronize(
+                        source, sourceConfiguration, sourcePages, transport);
                 cache.store(cacheDirectory, sourceConfiguration.id(), sourcePages);
-                System.out.printf("WikiHelp: %s downloaded %d page(s)%n",
-                        sourceConfiguration.id(), sourcePages.size());
+                System.out.printf("WikiHelp: %s downloaded %d page(s) and %d attachment(s)%n",
+                        sourceConfiguration.id(), sourcePages.size(), attachmentCount(sourcePages));
             } else if (cache.exists(cacheDirectory, sourceConfiguration.id())) {
                 sourcePages = cache.load(cacheDirectory, sourceConfiguration.id()).stream()
                         .filter(selection::matches)
                         .toList();
-                System.out.printf("WikiHelp: %s used %d cached page(s)%n",
-                        sourceConfiguration.id(), sourcePages.size());
+                System.out.printf("WikiHelp: %s used %d cached page(s) and %d attachment(s)%n",
+                        sourceConfiguration.id(), sourcePages.size(), attachmentCount(sourcePages));
             } else if (mode == WikiHelpConfiguration.Mode.CACHED) {
                 sourcePages = source.fetch(sourceConfiguration, selection, transport);
+                sourcePages = attachmentSynchronizer.synchronize(
+                        source, sourceConfiguration, sourcePages, transport);
                 cache.store(cacheDirectory, sourceConfiguration.id(), sourcePages);
-                System.out.printf("WikiHelp: %s populated cache with %d page(s)%n",
-                        sourceConfiguration.id(), sourcePages.size());
+                System.out.printf("WikiHelp: %s populated cache with %d page(s) and %d attachment(s)%n",
+                        sourceConfiguration.id(), sourcePages.size(), attachmentCount(sourcePages));
             } else {
                 throw new IllegalStateException(
                         "No cache for remote source '" + sourceConfiguration.id()
@@ -84,6 +92,10 @@ public final class WikiHelpCli {
         EclipseHelpRenderer.RenderResult result = new EclipseHelpRenderer().prepare(
                 configuration.title(), pages, outputDirectory, antFile, tocFile, cssFile);
         System.out.printf("WikiHelp: prepared Eclipse Help for %d page(s)%n", result.pageCount());
+    }
+
+    private static long attachmentCount(List<WikiPage> pages) {
+        return pages.stream().mapToLong(page -> page.attachments().size()).sum();
     }
 
     private static Map<String, String> options(String[] args) {

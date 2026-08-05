@@ -1,5 +1,7 @@
 package org.hammer.wikihelp.source.mediawiki;
 
+import org.hammer.wikihelp.core.AttachmentRequest;
+import org.hammer.wikihelp.core.AttachmentSupport;
 import org.hammer.wikihelp.core.HttpTransport;
 import org.hammer.wikihelp.core.Json;
 import org.hammer.wikihelp.core.MarkupFormat;
@@ -32,9 +34,11 @@ public final class MediaWikiSource implements WikiSource {
         String apiUrl = configuration.required("apiUrl");
         Map<String, String> headers = SourceSupport.bearerAuthentication(configuration);
         int maxPages = configuration.integer("maxPages", 500);
-        LinkedHashSet<String> titles = discoverTitles(configuration, selection, transport, apiUrl, headers, maxPages);
+        LinkedHashSet<String> titles = discoverTitles(
+                configuration, selection, transport, apiUrl, headers, maxPages);
         List<WikiPage> pages = new ArrayList<>();
-        boolean rendered = "rendered".equalsIgnoreCase(configuration.get("contentMode", "source"));
+        boolean rendered = "rendered".equalsIgnoreCase(
+                configuration.get("contentMode", "source"));
 
         for (String title : titles) {
             if (pages.size() >= maxPages) break;
@@ -44,6 +48,69 @@ public final class MediaWikiSource implements WikiSource {
             if (page != null && selection.matches(page)) pages.add(page);
         }
         return List.copyOf(pages);
+    }
+
+    @Override
+    public List<AttachmentRequest> attachmentRequests(
+            SourceConfiguration configuration,
+            WikiPage page,
+            HttpTransport transport) throws Exception {
+        LinkedHashMap<String, AttachmentRequest> result = new LinkedHashMap<>();
+        for (AttachmentRequest request : WikiSource.super.attachmentRequests(
+                configuration, page, transport)) {
+            result.put(request.reference() + "\u0000" + request.uri(), request);
+        }
+        if (page.format() != MarkupFormat.MEDIAWIKI) return List.copyOf(result.values());
+
+        List<String> names = AttachmentSupport.mediaWikiFileNames(page.content());
+        Map<String, String> originalNames = new LinkedHashMap<>();
+        names.forEach(name -> originalNames.put(canonicalFileName(name), name));
+        String apiUrl = configuration.required("apiUrl");
+        Map<String, String> headers = SourceSupport.bearerAuthentication(configuration);
+        for (int start = 0; start < names.size(); start += 50) {
+            List<String> batch = names.subList(start, Math.min(start + 50, names.size()));
+            Map<String, Object> query = new LinkedHashMap<>();
+            query.put("action", "query");
+            query.put("format", "json");
+            query.put("formatversion", "2");
+            query.put("redirects", "1");
+            query.put("prop", "imageinfo");
+            query.put("iiprop", "url|mime");
+            query.put("titles", batch.stream()
+                    .map(name -> "File:" + name)
+                    .collect(java.util.stream.Collectors.joining("|")));
+
+            Map<String, Object> root = Json.object(
+                    transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
+            for (Object item : Json.array(Json.object(root, "query"), "pages")) {
+                Map<String, Object> image = Json.object(item);
+                List<Object> information = Json.array(image, "imageinfo");
+                if (information.isEmpty()) continue;
+                Map<String, Object> info = Json.object(information.getFirst());
+                String url = Json.string(info.get("url"));
+                String title = Json.string(image.get("title"));
+                if (url == null || title == null) continue;
+                String fileName = title.replaceFirst("(?i)^(?:File|Image):", "");
+                String originalName = originalNames.getOrDefault(
+                        canonicalFileName(fileName), fileName);
+                AttachmentRequest request = new AttachmentRequest(
+                        "File:" + originalName, URI.create(url), fileName);
+                result.putIfAbsent(request.reference() + "\u0000" + request.uri(), request);
+            }
+        }
+        return List.copyOf(result.values());
+    }
+
+    private String canonicalFileName(String value) {
+        return value.replace('_', ' ').trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    @Override
+    public Map<String, String> attachmentHeaders(
+            SourceConfiguration configuration,
+            WikiPage page,
+            AttachmentRequest request) {
+        return SourceSupport.bearerAuthentication(configuration);
     }
 
     private LinkedHashSet<String> discoverTitles(
@@ -72,7 +139,8 @@ public final class MediaWikiSource implements WikiSource {
         }
 
         if (result.isEmpty()) {
-            result.addAll(allPages(transport, apiUrl, headers, configuration.get("namespace", "0"), maxPages));
+            result.addAll(allPages(
+                    transport, apiUrl, headers, configuration.get("namespace", "0"), maxPages));
         }
         return result;
     }
@@ -85,7 +153,8 @@ public final class MediaWikiSource implements WikiSource {
             int maxPages) throws Exception {
         LinkedHashSet<String> titles = new LinkedHashSet<>();
         String continuation = null;
-        String category = tag.regionMatches(true, 0, "Category:", 0, 9) ? tag : "Category:" + tag;
+        String category = tag.regionMatches(true, 0, "Category:", 0, 9)
+                ? tag : "Category:" + tag;
 
         do {
             Map<String, Object> query = new LinkedHashMap<>();
@@ -98,7 +167,8 @@ public final class MediaWikiSource implements WikiSource {
             query.put("cmlimit", "max");
             if (continuation != null) query.put("cmcontinue", continuation);
 
-            Map<String, Object> root = Json.object(transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
+            Map<String, Object> root = Json.object(
+                    transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
             Map<String, Object> result = Json.object(root, "query");
             for (Object item : Json.array(result, "categorymembers")) {
                 titles.add(Json.string(Json.object(item).get("title")));
@@ -127,7 +197,8 @@ public final class MediaWikiSource implements WikiSource {
             query.put("aplimit", "max");
             if (continuation != null) query.put("apcontinue", continuation);
 
-            Map<String, Object> root = Json.object(transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
+            Map<String, Object> root = Json.object(
+                    transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
             for (Object item : Json.array(Json.object(root, "query"), "allpages")) {
                 titles.add(Json.string(Json.object(item).get("title")));
                 if (titles.size() >= maxPages) return titles;
@@ -155,7 +226,8 @@ public final class MediaWikiSource implements WikiSource {
         query.put("cllimit", "max");
         query.put("titles", title);
 
-        Map<String, Object> root = Json.object(transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
+        Map<String, Object> root = Json.object(
+                transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
         List<Object> pages = Json.array(Json.object(root, "query"), "pages");
         if (pages.isEmpty()) return null;
         Map<String, Object> page = Json.object(pages.getFirst());
@@ -180,7 +252,8 @@ public final class MediaWikiSource implements WikiSource {
                 configuration.get("language", "en"),
                 MarkupFormat.MEDIAWIKI,
                 content,
-                TagSupport.combine(SourceSupport.tags(MarkupFormat.MEDIAWIKI, content, tags), tags),
+                TagSupport.combine(
+                        SourceSupport.tags(MarkupFormat.MEDIAWIKI, content, tags), tags),
                 pageUri(configuration, apiUrl, pageTitle, Json.string(page.get("fullurl"))),
                 Long.toString(Json.longValue(revision.get("revid"), 0)));
     }
@@ -198,7 +271,8 @@ public final class MediaWikiSource implements WikiSource {
         query.put("page", title);
         query.put("prop", "text|displaytitle|categories|revid");
 
-        Map<String, Object> root = Json.object(transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
+        Map<String, Object> root = Json.object(
+                transport.getJson(HttpTransport.withQuery(apiUrl, query), headers));
         Map<String, Object> parsed = Json.object(root, "parse");
         String content = Json.string(parsed.get("text"));
         String displayTitle = SourceSupport.stripHtml(Json.string(parsed.get("displaytitle")));

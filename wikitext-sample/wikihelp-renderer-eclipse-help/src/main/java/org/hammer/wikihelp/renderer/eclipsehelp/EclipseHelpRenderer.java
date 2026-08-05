@@ -1,6 +1,8 @@
 package org.hammer.wikihelp.renderer.eclipsehelp;
 
+import org.hammer.wikihelp.core.AttachmentSupport;
 import org.hammer.wikihelp.core.MarkupFormat;
+import org.hammer.wikihelp.core.WikiAttachment;
 import org.hammer.wikihelp.core.WikiPage;
 
 import java.io.IOException;
@@ -22,7 +24,11 @@ import java.util.regex.Pattern;
 
 public final class EclipseHelpRenderer {
     private static final Pattern URL_ATTRIBUTE = Pattern.compile(
-            "(?i)(href|src)\\s*=\\s*(['\"])(.*?)\\2");
+            "(?i)(href|src|poster|data)\\s*=\\s*(['\"])(.*?)\\2");
+    private static final Pattern SRCSET_ATTRIBUTE = Pattern.compile(
+            "(?i)srcset\\s*=\\s*(['\"])(.*?)\\1");
+    private static final Pattern CSS_URL = Pattern.compile(
+            "(?i)url\\(\\s*(['\"]?)(.*?)\\1\\s*\\)");
     private static final Pattern UNSAFE_BLOCK = Pattern.compile(
             "(?is)<(?:script|iframe|object|embed|form)\\b.*?</(?:script|iframe|object|embed|form)>");
     private static final Pattern EVENT_HANDLER = Pattern.compile(
@@ -42,6 +48,7 @@ public final class EclipseHelpRenderer {
         List<RenderedPage> pages = new ArrayList<>();
         Set<String> languages = new LinkedHashSet<>();
         Map<Group, List<String>> wikiTextSources = new LinkedHashMap<>();
+        Map<String, String> writtenAssets = new LinkedHashMap<>();
 
         for (WikiPage page : inputPages.stream()
                 .sorted(Comparator.comparing(WikiPage::language)
@@ -53,19 +60,26 @@ public final class EclipseHelpRenderer {
             Path languageDirectory = outputRoot.resolve(language);
             Files.createDirectories(languageDirectory);
 
+            AssetMappings assets = writeAttachments(
+                    page, languageDirectory, language, writtenAssets);
             String baseName = fileBase(page);
             String href = outputRoot.getFileName() + "/" + language + "/" + baseName + ".html";
             if (page.format() == MarkupFormat.HTML) {
-                String body = sanitizeAndResolve(page.content(), page.originalUri());
+                String body = sanitizeAndResolve(
+                        page.content(), page.originalUri(), assets.byUri());
                 Files.writeString(
                         languageDirectory.resolve(baseName + ".html"),
                         htmlDocument(page.title(), body, page.originalUri()),
                         StandardCharsets.UTF_8);
             } else if (page.format().isWikiTextRenderable()) {
                 String sourceName = baseName + "." + page.format().extension();
-                Files.writeString(languageDirectory.resolve(sourceName), page.content(), StandardCharsets.UTF_8);
+                Files.writeString(
+                        languageDirectory.resolve(sourceName),
+                        rewriteSourceAttachments(page, assets.byReference()),
+                        StandardCharsets.UTF_8);
                 wikiTextSources.computeIfAbsent(
-                        new Group(language, page.format()), ignored -> new ArrayList<>()).add(sourceName);
+                        new Group(language, page.format()), ignored -> new ArrayList<>())
+                        .add(sourceName);
             } else {
                 throw new IllegalArgumentException(
                         "Format " + page.format() + " for " + page.title()
@@ -82,6 +96,62 @@ public final class EclipseHelpRenderer {
         Files.writeString(tocFile, tocXml(title, pages), StandardCharsets.UTF_8);
         Files.writeString(antFile, antXml(title, outputRoot, wikiTextSources), StandardCharsets.UTF_8);
         return new RenderResult(antFile, tocFile, pages.size());
+    }
+
+    private AssetMappings writeAttachments(
+            WikiPage page,
+            Path languageDirectory,
+            String language,
+            Map<String, String> writtenAssets) throws IOException {
+        Map<String, String> byUri = new LinkedHashMap<>();
+        Map<String, String> byReference = new LinkedHashMap<>();
+        Path assetDirectory = languageDirectory.resolve("assets");
+
+        for (WikiAttachment attachment : page.attachments().stream()
+                .sorted(Comparator.comparing(WikiAttachment::sha256)
+                        .thenComparing(WikiAttachment::fileName)
+                        .thenComparing(WikiAttachment::reference))
+                .toList()) {
+            String key = language + "\u0000" + attachment.sha256();
+            String relative = writtenAssets.get(key);
+            if (relative == null) {
+                Files.createDirectories(assetDirectory);
+                String extension = AttachmentSupport.extension(attachment.fileName());
+                String fileName = attachment.sha256()
+                        + (extension.isBlank() ? "" : "." + extension);
+                Path target = assetDirectory.resolve(fileName);
+                if (!Files.exists(target)) Files.write(target, attachment.content());
+                relative = "assets/" + fileName;
+                writtenAssets.put(key, relative);
+            }
+            byUri.put(attachment.originalUri().normalize().toString(), relative);
+            byReference.put(attachment.reference(), relative);
+        }
+        return new AssetMappings(Map.copyOf(byUri), Map.copyOf(byReference));
+    }
+
+    private String rewriteSourceAttachments(
+            WikiPage page,
+            Map<String, String> references) {
+        String result = page.content();
+        for (WikiAttachment attachment : page.attachments()) {
+            String local = references.get(attachment.reference());
+            if (local == null) continue;
+            String reference = attachment.reference();
+            if (reference.matches("(?i)^(?:File|Image):.*")) {
+                String fileName = reference.replaceFirst("(?i)^(?:File|Image):", "").trim();
+                Pattern syntax = Pattern.compile(
+                        "(?is)\\[\\[(?:File|Image)\\s*:\\s*"
+                                + Pattern.quote(fileName)
+                                + "(?:\\|[^\\]]*)?]]");
+                result = syntax.matcher(result).replaceAll(Matcher.quoteReplacement(
+                        "<img src=\"" + html(local) + "\" alt=\"" + html(fileName) + "\"/>"));
+            } else {
+                result = result.replace(reference, local);
+            }
+            result = result.replace(attachment.originalUri().toString(), local);
+        }
+        return result;
     }
 
     private String antXml(
@@ -182,25 +252,81 @@ public final class EclipseHelpRenderer {
                 """.formatted(html(title), html(title), body, sourceLink);
     }
 
-    private String sanitizeAndResolve(String html, URI base) {
-        String safe = UNSAFE_BLOCK.matcher(html == null ? "" : html).replaceAll("");
+    private String sanitizeAndResolve(
+            String sourceHtml,
+            URI base,
+            Map<String, String> localAttachments) {
+        String safe = UNSAFE_BLOCK.matcher(sourceHtml == null ? "" : sourceHtml).replaceAll("");
         safe = EVENT_HANDLER.matcher(safe).replaceAll("");
+
         Matcher matcher = URL_ATTRIBUTE.matcher(safe);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {
-            String value = matcher.group(3).trim();
-            String replacement = value;
-            if (base != null && !value.isBlank()
-                    && !value.startsWith("#")
-                    && !value.matches("(?i)^(?:https?|mailto|data):.*")) {
-                replacement = base.resolve(value).toString();
-            }
-            if (replacement.matches("(?i)^javascript:.*")) replacement = "#";
+            String replacement = resolveReference(
+                    htmlDecode(matcher.group(3).trim()), base, localAttachments);
             matcher.appendReplacement(result, Matcher.quoteReplacement(
-                    matcher.group(1) + "=" + matcher.group(2) + html(replacement) + matcher.group(2)));
+                    matcher.group(1) + "=" + matcher.group(2)
+                            + html(replacement) + matcher.group(2)));
+        }
+        matcher.appendTail(result);
+        safe = result.toString();
+
+        matcher = SRCSET_ATTRIBUTE.matcher(safe);
+        result = new StringBuilder();
+        while (matcher.find()) {
+            String replacement = rewriteSrcset(
+                    htmlDecode(matcher.group(2)), base, localAttachments);
+            matcher.appendReplacement(result, Matcher.quoteReplacement(
+                    "srcset=" + matcher.group(1) + html(replacement) + matcher.group(1)));
+        }
+        matcher.appendTail(result);
+        safe = result.toString();
+
+        matcher = CSS_URL.matcher(safe);
+        result = new StringBuilder();
+        while (matcher.find()) {
+            String replacement = resolveReference(
+                    htmlDecode(matcher.group(2).trim()), base, localAttachments);
+            matcher.appendReplacement(result, Matcher.quoteReplacement(
+                    "url(" + matcher.group(1) + html(replacement) + matcher.group(1) + ")"));
         }
         matcher.appendTail(result);
         return result.toString();
+    }
+
+    private String rewriteSrcset(
+            String value,
+            URI base,
+            Map<String, String> localAttachments) {
+        List<String> entries = new ArrayList<>();
+        for (String entry : value.split(",")) {
+            String trimmed = entry.trim();
+            if (trimmed.isBlank()) continue;
+            int space = trimmed.indexOf(' ');
+            String url = space < 0 ? trimmed : trimmed.substring(0, space);
+            String descriptor = space < 0 ? "" : trimmed.substring(space);
+            entries.add(resolveReference(url, base, localAttachments) + descriptor);
+        }
+        return String.join(", ", entries);
+    }
+
+    private String resolveReference(
+            String value,
+            URI base,
+            Map<String, String> localAttachments) {
+        if (value == null || value.isBlank() || value.startsWith("#")
+                || value.matches("(?i)^(?:mailto|data):.*")) {
+            return value == null ? "" : value;
+        }
+        if (value.matches("(?i)^javascript:.*")) return "#";
+        try {
+            URI candidate = URI.create(value.replace(" ", "%20"));
+            URI resolved = candidate.isAbsolute() || base == null ? candidate : base.resolve(candidate);
+            String local = localAttachments.get(resolved.normalize().toString());
+            return local == null ? resolved.toString() : local;
+        } catch (Exception ignored) {
+            return value;
+        }
     }
 
     private String fileBase(WikiPage page) {
@@ -222,7 +348,8 @@ public final class EclipseHelpRenderer {
     }
 
     private String safeLanguage(String language) {
-        String result = language == null ? "en" : language.toLowerCase().replaceAll("[^a-z0-9_-]", "");
+        String result = language == null ? "en"
+                : language.toLowerCase().replaceAll("[^a-z0-9_-]", "");
         return result.isBlank() ? "en" : result;
     }
 
@@ -246,6 +373,15 @@ public final class EclipseHelpRenderer {
         return xml(value).replace("'", "&#39;");
     }
 
+    private String htmlDecode(String value) {
+        return value == null ? "" : value
+                .replace("&amp;", "&")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">");
+    }
+
     private void deleteRecursively(Path path) throws IOException {
         if (!Files.exists(path)) return;
         try (var stream = Files.walk(path)) {
@@ -262,5 +398,10 @@ public final class EclipseHelpRenderer {
     }
 
     private record RenderedPage(String sourceId, String language, String title, String href) {
+    }
+
+    private record AssetMappings(
+            Map<String, String> byUri,
+            Map<String, String> byReference) {
     }
 }
