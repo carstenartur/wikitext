@@ -1,94 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Sample to show how to generate eclipse help plugin based on mediawiki content
-   Carsten Hammer
-   carsten.hammer@t-online.de
- -->
-<project name="mylyn-docs-wikitest" default="all">
-	<description>
-            Generate Eclipse help content from the mediawiki server
-		    http://www.mediawiki.org/wiki/api.php
-    </description>
-	<path id="wikitext.tasks.classpath">
-		<fileset dir="lib">
-			<include name="org.eclipse.mylyn.wikitext.*core*.jar" />
-		</fileset>
-	</path>
-	<property name="wikitext.standalone" value="" />
-	<!-- path to wikitext standalone package -->
-	<path id="wikitext.classpath">
-		<fileset dir="${wikitext.standalone}">
-			<include name="org.eclipse.mylyn.wikitext.*core*.jar" />
-		</fileset>
-	</path>
+    Generate reproducible Eclipse help from checked-in MediaWiki sources.
+    The former live Eclipsepedia API integration was retired when Eclipsepedia
+    became a read-only static archive.
+-->
+<project name="wikitext-help" default="all">
+    <path id="wikitext.tasks.classpath">
+        <fileset dir="lib">
+            <include name="org.eclipse.mylyn.wikitext.*core*.jar"/>
+        </fileset>
+    </path>
 
-	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties" />
-	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties" />
-	<!-- add the ant tasks from ant-contrib -->
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+    <taskdef classpathref="wikitext.tasks.classpath"
+             resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties"/>
 
-	<target name="clean">
-		<delete failonerror="false">
-			<fileset dir="tmp" includes="**/*" />
-			<fileset file="build-doc-pull.xml" />
-			<fileset file="build-doc-pull-enhanced.xml" />
-		</delete>
-		<delete dir="nl" />
-	</target>
+    <target name="clean">
+        <delete dir="nl" failonerror="false"/>
+        <delete file="GEF_toc.xml" failonerror="false"/>
+    </target>
 
-	<target name="init" depends="clean">
-		<mkdir dir="tmp" />
-		<!--
-				There are two sources of the content of book.css:
-				
-				http://wiki.eclipse.org/index.php/MediaWiki:Common.css
-				http://wiki.eclipse.org/index.php/MediaWiki:Geshi.css
-				-->
-		<copy file="${basedir}/book.css" tofile="${basedir}/nl/en/book.css" overwrite="true" />
-		<copy file="${basedir}/book.css" tofile="${basedir}/nl/de/book.css" overwrite="true" />
-	</target>
+    <target name="init" depends="clean">
+        <mkdir dir="nl/en"/>
+        <mkdir dir="nl/de"/>
+        <copy file="book.css" tofile="nl/en/book.css" overwrite="true"/>
+        <copy file="book.css" tofile="nl/de/book.css" overwrite="true"/>
+        <copy file="src-doc/en/GEF.mediawiki" tofile="nl/en/GEF.mediawiki" overwrite="true"/>
+        <copy file="src-doc/de/GEF.mediawiki" tofile="nl/de/GEF.mediawiki" overwrite="true"/>
+    </target>
 
-	<!-- ================================= 
-		          target: pull  the page lists from wiki through the use of the mediawiki api         
-		          
-		          sample url:
-		          
-		          http://wiki.eclipse.org/api.php?action=query&list=categorymembers&cmtitle=Category:Mylyn&cmlimit=150&format=xml
-		             
-		          Dokumentation:
-		             
-		          http://www.mediawiki.org/wiki/API:Query   
-		             
-		         ================================= -->
-	<target name="pull">
-		<!-- -To be filled by pagelist2ant.xsl -->
-	</target>
+    <target name="generate-online-help" depends="init"
+            description="Generate Eclipse help from checked-in MediaWiki source">
+        <wikitext-to-eclipse-help markuplanguage="MediaWiki"
+                                  navigationImages="false"
+                                  validate="true"
+                                  failonvalidationerror="true"
+                                  formatoutput="true"
+                                  defaultAbsoluteLinkTarget="mylyn_external"
+                                  helpPrefix="nl/en"
+                                  title="Graphical Editing Framework"
+                                  overwrite="true"
+                                  xmlFilenameFormat="$1_toc.xml">
+            <fileset dir="nl/en" includes="GEF.mediawiki"/>
+            <stylesheet url="book.css"/>
+        </wikitext-to-eclipse-help>
 
-	<!--
-			now run the stylesheet to create a new ant build file by using the xml list pulled in the step before to insert path entries. The ant build file is based on 
-			this build file but all path entries are removed and created again according to the lists.
-	-->
-	<target name="pullhelppagelistfromwiki" depends="init">
-		<xslt basedir="" in="build-doc.xml" out="build-doc-pull.xml" style="injectpulllist.xsl">
-			<factory name="net.sf.saxon.TransformerFactoryImpl" />
-			<classpath location="lib/saxon-9.1.0.6j.jar" />
-		</xslt>
-		<ant antfile="build-doc-pull.xml" target="pull" />
-		<!-- 
-		now we have lists of all pages for requested categories in files "tmp/*_list.xml" 
-		as next step we need to inject these pages that belong to a category and have to be pulled
-		from the wikiserver to the ant build file task
-		      -->
-		<xslt basedir="" in="build-doc-pull.xml" out="build-doc-pull-enhanced.xml" style="pagelist2ant.xsl">
-			<factory name="net.sf.saxon.TransformerFactoryImpl" />
-			<classpath location="lib/saxon-9.1.0.6j.jar" />
-		</xslt>
-		<ant antfile="build-doc-pull-enhanced.xml" target="generate-online-help" />
-	</target>
+        <wikitext-to-eclipse-help markuplanguage="MediaWiki"
+                                  navigationImages="false"
+                                  validate="true"
+                                  failonvalidationerror="true"
+                                  formatoutput="true"
+                                  defaultAbsoluteLinkTarget="mylyn_external"
+                                  helpPrefix="nl/de"
+                                  title="Graphical Editing Framework"
+                                  overwrite="true"
+                                  xmlFilenameFormat="$1_toc.xml">
+            <fileset dir="nl/de" includes="GEF.mediawiki"/>
+            <stylesheet url="book.css"/>
+        </wikitext-to-eclipse-help>
 
-	<target name="all" depends="pullhelppagelistfromwiki" />
+        <copy file="nl/en/GEF_toc.xml" tofile="GEF_toc.xml" overwrite="true"/>
+        <delete>
+            <fileset dir="nl" includes="**/*.mediawiki"/>
+        </delete>
+    </target>
 
-	<target name="generate-online-help" description="Generate Eclipse help from mediawiki source">
-		<!-- -To be filled by injectpulllist.xsl -->
-	</target>
+    <target name="all" depends="generate-online-help"/>
 </project>

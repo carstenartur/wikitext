@@ -1,6 +1,6 @@
 # wikitext
 
-A small Eclipse help plug-in generated from WikiText source material.
+A small Eclipse help plug-in generated from checked-in MediaWiki source material with Mylyn WikiText.
 
 [![Java CI with Maven](https://github.com/carstenartur/wikitext/actions/workflows/maven.yml/badge.svg)](https://github.com/carstenartur/wikitext/actions/workflows/maven.yml)
 
@@ -14,13 +14,17 @@ The build uses:
 - Maven 3.9.16 in CI (Tycho requires Maven 3.9.9 or newer)
 - Eclipse Tycho 5.0.3
 
+## Documentation generation
+
+The original build downloaded pages from the Eclipsepedia MediaWiki API. Eclipsepedia is now a read-only static archive and no longer provides that API endpoint. The build therefore converts the checked-in sources under `wikitext-sample/wikitext-sample/src-doc/` with WikiText's `wikitext-to-eclipse-help` Ant task. This keeps the sample functional, deterministic, and independent of network availability.
+
 ## Build
 
 ```bash
 mvn -B --no-transfer-progress verify --file wikitext-sample/pom.xml
 ```
 
-The generated plug-in is written below `wikitext-sample/wikitext-sample/target/`. Copy the generated `wikitext-sample-*.jar` to the Eclipse `dropins` directory, restart Eclipse, and open **Help > Help Contents > GEF**.
+The generated plug-in is written below `wikitext-sample/wikitext-sample/target/`. Copy the generated `wikitext-sample-*.jar` to the Eclipse `dropins` directory, restart Eclipse, and open **Help > Help Contents > Graphical Editing Framework**.
 
 Historical target definitions remain packaged as classified target artifacts. To select and validate one explicitly, for example:
 
