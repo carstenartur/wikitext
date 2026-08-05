@@ -1,44 +1,90 @@
-# wikitext
+# WikiHelp
 
-A small Eclipse help plug-in generated from checked-in MediaWiki source material with Mylyn WikiText.
+WikiHelp selects documentation pages from wiki systems and Git-backed source trees, normalizes them, and generates an installable Eclipse Help plug-in. Selection is metadata-driven: MediaWiki categories, Confluence labels, GitLab/local front matter tags, archived Eclipsepedia categories, explicit page names, and title or path globs can all decide which pages enter the help system.
 
 [![Java CI with Maven](https://github.com/carstenartur/wikitext/actions/workflows/maven.yml/badge.svg)](https://github.com/carstenartur/wikitext/actions/workflows/maven.yml)
 
-## Current platform
+## Sources
 
-The default target platform is **Eclipse 2026-06 (Eclipse Platform 4.40)**. The released repository is pinned in `wikitext-sample/rcptarget/rcptarget.target`, so builds remain reproducible instead of following a moving update site.
+The source SPI currently provides adapters for:
 
-The build uses:
+- **MediaWiki** through the Action API, including category discovery and source or rendered content
+- **GitLab Wiki** through the project Wiki API, with rendered HTML by default and tags read from page front matter
+- **Confluence Cloud or Data Center** through CQL, labels, and rendered `export_view` content
+- **Eclipsepedia** through its read-only static HTML archive
+- **Local/Git content** including MediaWiki, Confluence, Textile, TracWiki, TWiki, HTML, Markdown, and AsciiDoc files
 
+The Eclipse Help renderer accepts HTML directly and delegates MediaWiki, Confluence, Textile, TracWiki, and TWiki source markup to Mylyn WikiText. Sources such as GitLab Markdown are normally requested as rendered HTML, so their native server renderer remains authoritative.
+
+## Architecture
+
+```text
+Wiki source adapters
+        │
+        ▼
+normalized WikiPage records
+        │
+        ├── deterministic source cache
+        │
+        ▼
+Eclipse Help renderer
+        │
+        ├── HTML copied and sanitized
+        └── WikiText render plan
+        ▼
+Eclipse Help plug-in
+```
+
+Source acquisition, selection, caching, and rendering are separate modules. A normal build can therefore remain offline and reproducible, while an explicit online synchronization refreshes remote content.
+
+See [Architecture](docs/architecture.md) and [Configuration](docs/configuration.md).
+
+## Current build platform
+
+- Eclipse 2026-06 / Eclipse Platform 4.40
 - JDK 21
-- Maven 3.9.16 in CI (Tycho requires Maven 3.9.9 or newer)
 - Eclipse Tycho 5.0.3
+- Maven 3.9.16 in CI
 
-## Documentation generation
+The released Eclipse repository is pinned in `wikitext-sample/rcptarget/rcptarget.target`.
 
-The original build downloaded pages from the Eclipsepedia MediaWiki API. Eclipsepedia is now a read-only static archive and no longer provides that API endpoint. The build therefore converts the checked-in sources under `wikitext-sample/wikitext-sample/src-doc/` with WikiText's `wikitext-to-eclipse-help` Ant task. This keeps the sample functional, deterministic, and independent of network availability.
-
-## Build
+## Build the checked-in sample
 
 ```bash
 mvn -B --no-transfer-progress verify --file wikitext-sample/pom.xml
 ```
 
-The generated plug-in is written below `wikitext-sample/wikitext-sample/target/`. Copy the generated `wikitext-sample-*.jar` to the Eclipse `dropins` directory, restart Eclipse, and open **Help > Help Contents > Graphical Editing Framework**.
+The sample reads tagged MediaWiki files from a local Git-backed source directory and packages the generated output as `wikitext-sample/wikitext-sample/target/wikitext-sample-1.1.0-SNAPSHOT.jar`.
 
-Historical target definitions remain packaged as classified target artifacts. To select and validate one explicitly, for example:
+## Synchronize remote sources
+
+Configure a remote adapter in `wikitext-sample/wikitext-sample/wikihelp.properties`, then populate a persistent cache:
+
+```bash
+mvn -B \
+  -Dwikihelp.mode=online \
+  -Dwikihelp.cache=src-cache \
+  verify --file wikitext-sample/pom.xml
+```
+
+Commit the cache when the help build must be reproducible without network access. Later builds use:
+
+```bash
+mvn -B \
+  -Dwikihelp.mode=offline \
+  -Dwikihelp.cache=src-cache \
+  verify --file wikitext-sample/pom.xml
+```
+
+Credentials are read only from environment variables named in the source configuration; they are never stored in the cache manifest.
+
+## Historical Eclipse targets
+
+Historical target definitions remain packaged as classified target artifacts. For example:
 
 ```bash
 mvn -B \
   -Dtarget.classifier=2022-03 \
   -Dtarget.file=2022-03.target \
   verify --file wikitext-sample/pom.xml
-```
-
-## Change project version
-
-```bash
-mvn org.eclipse.tycho:tycho-versions-plugin:5.0.3:set-version \
-  -DnewVersion=1.2.0 \
-  --file wikitext-sample/pom.xml
 ```

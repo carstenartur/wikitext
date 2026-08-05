@@ -1,69 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Generate reproducible Eclipse help from checked-in MediaWiki sources.
-    The former live Eclipsepedia API integration was retired when Eclipsepedia
-    became a read-only static archive.
+    Wiki source synchronization and Eclipse Help generation are intentionally
+    separate stages. The Java source adapters populate a deterministic cache;
+    Mylyn WikiText then renders supported source markup into Eclipse Help.
 -->
-<project name="wikitext-help" default="all">
-    <path id="wikitext.tasks.classpath">
-        <fileset dir="lib">
-            <include name="org.eclipse.mylyn.wikitext.core_*.jar"/>
-            <include name="org.eclipse.mylyn.wikitext.mediawiki.core*.jar"/>
-        </fileset>
-    </path>
+<project name="wikihelp" default="all">
+    <property name="wikihelp.mode" value="offline"/>
+    <property name="wikihelp.cache" location="target/wikihelp-cache"/>
 
-    <taskdef classpathref="wikitext.tasks.classpath"
-             resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties"/>
+    <path id="wikihelp.classpath">
+        <pathelement location="../wikihelp-core/target/classes"/>
+        <pathelement location="../wikihelp-source-local/target/classes"/>
+        <pathelement location="../wikihelp-source-mediawiki/target/classes"/>
+        <pathelement location="../wikihelp-source-gitlab/target/classes"/>
+        <pathelement location="../wikihelp-source-confluence/target/classes"/>
+        <pathelement location="../wikihelp-source-eclipsepedia/target/classes"/>
+        <pathelement location="../wikihelp-renderer-eclipse-help/target/classes"/>
+        <pathelement location="../wikihelp-cli/target/classes"/>
+    </path>
 
     <target name="clean">
         <delete dir="nl" failonerror="false"/>
-        <delete file="GEF_toc.xml" failonerror="false"/>
+        <delete file="wikihelp_toc.xml" failonerror="false"/>
+        <delete file="target/wikihelp-render.xml" failonerror="false"/>
     </target>
 
-    <target name="init" depends="clean">
-        <mkdir dir="nl/en"/>
-        <mkdir dir="nl/de"/>
-        <copy file="book.css" tofile="nl/en/book.css" overwrite="true"/>
-        <copy file="book.css" tofile="nl/de/book.css" overwrite="true"/>
-        <copy file="src-doc/en/GEF.mediawiki" tofile="nl/en/GEF.mediawiki" overwrite="true"/>
-        <copy file="src-doc/de/GEF.mediawiki" tofile="nl/de/GEF.mediawiki" overwrite="true"/>
+    <target name="sync" depends="clean"
+            description="Select source pages, synchronize their cache, and prepare the render plan">
+        <mkdir dir="target"/>
+        <java classname="org.hammer.wikihelp.cli.WikiHelpCli"
+              classpathref="wikihelp.classpath"
+              fork="true"
+              failonerror="true">
+            <sysproperty key="wikihelp.mode" value="${wikihelp.mode}"/>
+            <arg value="--config"/><arg file="wikihelp.properties"/>
+            <arg value="--cache"/><arg file="${wikihelp.cache}"/>
+            <arg value="--output"/><arg file="nl"/>
+            <arg value="--ant"/><arg file="target/wikihelp-render.xml"/>
+            <arg value="--toc"/><arg file="wikihelp_toc.xml"/>
+            <arg value="--css"/><arg file="book.css"/>
+        </java>
     </target>
 
-    <target name="generate-online-help" depends="init"
-            description="Generate Eclipse help from checked-in MediaWiki source">
-        <wikitext-to-eclipse-help markuplanguage="MediaWiki"
-                                  navigationImages="false"
-                                  validate="true"
-                                  failonvalidationerror="true"
-                                  formatoutput="true"
-                                  defaultAbsoluteLinkTarget="mylyn_external"
-                                  helpPrefix="nl/en"
-                                  title="Graphical Editing Framework"
-                                  overwrite="true"
-                                  xmlFilenameFormat="$1_toc.xml">
-            <fileset dir="nl/en" includes="GEF.mediawiki"/>
-            <stylesheet url="book.css"/>
-        </wikitext-to-eclipse-help>
-
-        <wikitext-to-eclipse-help markuplanguage="MediaWiki"
-                                  navigationImages="false"
-                                  validate="true"
-                                  failonvalidationerror="true"
-                                  formatoutput="true"
-                                  defaultAbsoluteLinkTarget="mylyn_external"
-                                  helpPrefix="nl/de"
-                                  title="Graphical Editing Framework"
-                                  overwrite="true"
-                                  xmlFilenameFormat="$1_toc.xml">
-            <fileset dir="nl/de" includes="GEF.mediawiki"/>
-            <stylesheet url="book.css"/>
-        </wikitext-to-eclipse-help>
-
-        <copy file="nl/en/GEF_toc.xml" tofile="GEF_toc.xml" overwrite="true"/>
-        <delete>
-            <fileset dir="nl" includes="**/*.mediawiki"/>
-        </delete>
+    <target name="render" depends="sync"
+            description="Render cached source pages as Eclipse Help">
+        <ant antfile="target/wikihelp-render.xml" inheritAll="true" target="render"/>
     </target>
 
-    <target name="all" depends="generate-online-help"/>
+    <target name="all" depends="render"/>
 </project>

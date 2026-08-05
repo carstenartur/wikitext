@@ -8,17 +8,28 @@
     <artifactId>wikitext</artifactId>
     <version>1.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>wikitext</name>
+    <name>WikiHelp</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <tycho-version>5.0.3</tycho-version>
         <target.classifier></target.classifier>
         <target.file>rcptarget.target</target.file>
+        <wikihelp.mode>offline</wikihelp.mode>
+        <wikihelp.cache>target/wikihelp-cache</wikihelp.cache>
     </properties>
 
     <modules>
+        <module>wikihelp-core</module>
+        <module>wikihelp-source-local</module>
+        <module>wikihelp-source-mediawiki</module>
+        <module>wikihelp-source-gitlab</module>
+        <module>wikihelp-source-confluence</module>
+        <module>wikihelp-source-eclipsepedia</module>
+        <module>wikihelp-renderer-eclipse-help</module>
+        <module>wikihelp-cli</module>
         <module>rcptarget</module>
         <module>wikitext-sample</module>
     </modules>
@@ -32,6 +43,15 @@
     </developers>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>

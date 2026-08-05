@@ -1,8 +1,8 @@
 = Eclipse Graphical Editing Framework documentation =
 
-This help plug-in demonstrates how Eclipse help can be generated from MediaWiki markup with Mylyn WikiText.
+This help plug-in demonstrates how selected wiki content can be converted into Eclipse Help with the modular WikiHelp pipeline and Mylyn WikiText.
 
-The source is stored in this repository so that builds are reproducible and do not depend on the retired Eclipsepedia MediaWiki API.
+The checked-in source represents a Git-backed documentation store. The same renderer can consume pages synchronized from MediaWiki, GitLab Wiki, Confluence, or the static Eclipsepedia archive.
 
 == Current resources ==
 
@@ -12,12 +12,10 @@ The source is stored in this repository so that builds are reproducible and do n
 
 == Building the sample ==
 
-Run the Maven build from the repository root. The generated HTML and table of contents are packaged as an Eclipse help plug-in.
+Run the Maven build from the repository root. The selector includes this page because it carries the GEF category below.
 
 <pre>
 mvn -B --no-transfer-progress verify --file wikitext-sample/pom.xml
 </pre>
 
-== Installing the result ==
-
-Copy the generated plug-in JAR from the Maven target directory into the Eclipse dropins directory, restart Eclipse, and open Help > Help Contents > Graphical Editing Framework.
+[[Category:GEF]]

@@ -13,7 +13,7 @@
 
     <artifactId>wikitext-sample</artifactId>
     <packaging>eclipse-plugin</packaging>
-    <name>wikitext-sample</name>
+    <name>WikiHelp Eclipse Help Sample</name>
 
     <build>
         <plugins>
@@ -30,8 +30,8 @@
                         </goals>
                         <configuration>
                             <target name="generator">
-                                <echo>Generating documentation from checked-in MediaWiki sources</echo>
-                                <ant antfile="build-doc.xml" inheritRefs="true" target="all"/>
+                                <echo>Synchronizing selected WikiHelp sources and generating Eclipse Help</echo>
+                                <ant antfile="build-doc.xml" inheritAll="true" inheritRefs="true" target="all"/>
                             </target>
                         </configuration>
                     </execution>
