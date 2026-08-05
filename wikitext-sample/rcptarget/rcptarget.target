@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?pde version="3.8"?>
-<target includeMode="feature" name="Eclipse 2026-06 (4.40)" sequenceNumber="44">
+<target includeMode="feature" name="Eclipse 2026-06 (4.40)" sequenceNumber="45">
     <locations>
         <location includeAllPlatforms="false"
                   includeConfigurePhase="false"

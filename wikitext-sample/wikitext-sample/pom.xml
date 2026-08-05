@@ -89,7 +89,7 @@
                             <groupId>org.hammer</groupId>
                             <artifactId>rcptarget</artifactId>
                             <version>${project.version}</version>
-                            <classifier>${rcpversion}</classifier>
+                            <classifier>${target.classifier}</classifier>
                         </artifact>
                     </target>
                     <environments>

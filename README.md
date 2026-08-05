@@ -6,7 +6,7 @@ A small Eclipse help plug-in generated from WikiText source material.
 
 ## Current platform
 
-The default target platform is **Eclipse 2026-06 (Eclipse Platform 4.40)**. The repository URL is pinned in `wikitext-sample/rcptarget/latest.target`, so builds remain reproducible instead of following a moving update site.
+The default target platform is **Eclipse 2026-06 (Eclipse Platform 4.40)**. The released repository is pinned in `wikitext-sample/rcptarget/rcptarget.target`, so builds remain reproducible instead of following a moving update site.
 
 The build uses:
 
@@ -22,10 +22,13 @@ mvn -B --no-transfer-progress verify --file wikitext-sample/pom.xml
 
 The generated plug-in is written below `wikitext-sample/wikitext-sample/target/`. Copy the generated `wikitext-sample-*.jar` to the Eclipse `dropins` directory, restart Eclipse, and open **Help > Help Contents > GEF**.
 
-Historical target definitions remain available for compatibility checks. Select one explicitly, for example:
+Historical target definitions remain packaged as classified target artifacts. To select and validate one explicitly, for example:
 
 ```bash
-mvn -B -Drcpversion=2022-03 verify --file wikitext-sample/pom.xml
+mvn -B \
+  -Dtarget.classifier=2022-03 \
+  -Dtarget.file=2022-03.target \
+  verify --file wikitext-sample/pom.xml
 ```
 
 ## Change project version
