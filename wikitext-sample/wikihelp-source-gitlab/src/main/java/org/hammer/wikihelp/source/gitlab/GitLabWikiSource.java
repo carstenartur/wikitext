@@ -1,5 +1,6 @@
 package org.hammer.wikihelp.source.gitlab;
 
+import org.hammer.wikihelp.core.AttachmentRequest;
 import org.hammer.wikihelp.core.HttpResponseData;
 import org.hammer.wikihelp.core.HttpTransport;
 import org.hammer.wikihelp.core.Json;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class GitLabWikiSource implements WikiSource {
     @Override
@@ -32,10 +32,7 @@ public final class GitLabWikiSource implements WikiSource {
         String apiBase = configuration.get("apiBaseUrl", baseUrl + "/api/v4").replaceAll("/+$", "");
         String project = configuration.required("project");
         String projectId = HttpTransport.encodePathSegment(project);
-        String token = configuration.environment("tokenEnvironment");
-        Map<String, String> headers = token == null || token.isBlank()
-                ? Map.of()
-                : Map.of("PRIVATE-TOKEN", token);
+        Map<String, String> headers = authentication(configuration);
         int maxPages = configuration.integer("maxPages", 500);
         boolean rendered = !"source".equalsIgnoreCase(configuration.get("contentMode", "rendered"));
 
@@ -80,6 +77,21 @@ public final class GitLabWikiSource implements WikiSource {
             if (entries.size() < 100) break;
         }
         return List.copyOf(result);
+    }
+
+    @Override
+    public Map<String, String> attachmentHeaders(
+            SourceConfiguration configuration,
+            WikiPage page,
+            AttachmentRequest request) {
+        return authentication(configuration);
+    }
+
+    private Map<String, String> authentication(SourceConfiguration configuration) {
+        String token = configuration.environment("tokenEnvironment");
+        return token == null || token.isBlank()
+                ? Map.of()
+                : Map.of("PRIVATE-TOKEN", token);
     }
 
     private WikiPage renderedPage(

@@ -1,6 +1,6 @@
 # WikiHelp
 
-WikiHelp selects documentation pages from wiki systems and Git-backed source trees, normalizes them, and generates an installable Eclipse Help plug-in. Selection is metadata-driven: MediaWiki categories, Confluence labels, GitLab/local front matter tags, archived Eclipsepedia categories, explicit page names, and title or path globs can all decide which pages enter the help system.
+WikiHelp selects documentation pages from wiki systems and Git-backed source trees, normalizes them, downloads referenced images and attachments, and generates an installable Eclipse Help plug-in. Selection is metadata-driven: MediaWiki categories, Confluence labels, GitLab/local front matter tags, archived Eclipsepedia categories, explicit page names, and title or path globs can all decide which pages enter the help system.
 
 [![Java CI with Maven](https://github.com/carstenartur/wikitext/actions/workflows/maven.yml/badge.svg)](https://github.com/carstenartur/wikitext/actions/workflows/maven.yml)
 
@@ -8,11 +8,11 @@ WikiHelp selects documentation pages from wiki systems and Git-backed source tre
 
 The source SPI currently provides adapters for:
 
-- **MediaWiki** through the Action API, including category discovery and source or rendered content
-- **GitLab Wiki** through the project Wiki API, with rendered HTML by default and tags read from page front matter
-- **Confluence Cloud or Data Center** through CQL, labels, and rendered `export_view` content
-- **Eclipsepedia** through its read-only static HTML archive
-- **Local/Git content** including MediaWiki, Confluence, Textile, TracWiki, TWiki, HTML, Markdown, and AsciiDoc files
+- **MediaWiki** through the Action API, including category discovery, source or rendered content, and image resolution through `imageinfo`
+- **GitLab Wiki** through the project Wiki API, with rendered HTML by default, tags read from page front matter, and authenticated `/uploads/` assets
+- **Confluence Cloud or Data Center** through CQL, labels, rendered `export_view` content, and authenticated attachment downloads
+- **Eclipsepedia** through its read-only static HTML archive, including archived images and downloadable files
+- **Local/Git content** including MediaWiki, Confluence, Textile, TracWiki, TWiki, HTML, Markdown, and AsciiDoc files with in-tree assets
 
 The Eclipse Help renderer accepts HTML directly and delegates MediaWiki, Confluence, Textile, TracWiki, and TWiki source markup to Mylyn WikiText. Sources such as GitLab Markdown are normally requested as rendered HTML, so their native server renderer remains authoritative.
 
@@ -22,20 +22,21 @@ The Eclipse Help renderer accepts HTML directly and delegates MediaWiki, Conflue
 Wiki source adapters
         │
         ▼
-normalized WikiPage records
+WikiPage + WikiAttachment records
         │
-        ├── deterministic source cache
+        ├── deterministic page and binary-asset cache
         │
         ▼
 Eclipse Help renderer
         │
-        ├── HTML copied and sanitized
-        └── WikiText render plan
+        ├── HTML sanitized and links localized
+        ├── WikiText render plan
+        └── deduplicated local assets
         ▼
 Eclipse Help plug-in
 ```
 
-Source acquisition, selection, caching, and rendering are separate modules. A normal build can therefore remain offline and reproducible, while an explicit online synchronization refreshes remote content.
+Source acquisition, page selection, attachment synchronization, caching, and rendering are separate modules. A normal build can therefore remain offline and reproducible, while an explicit online synchronization refreshes remote pages and their assets.
 
 See [Architecture](docs/architecture.md) and [Configuration](docs/configuration.md).
 
@@ -67,7 +68,7 @@ mvn -B \
   verify --file wikitext-sample/pom.xml
 ```
 
-Commit the cache when the help build must be reproducible without network access. Later builds use:
+Commit the cache when the help build must be reproducible without network access. Pages, attachment metadata, and binary assets are stored below the source cache. Later builds use:
 
 ```bash
 mvn -B \
@@ -76,7 +77,7 @@ mvn -B \
   verify --file wikitext-sample/pom.xml
 ```
 
-Credentials are read only from environment variables named in the source configuration; they are never stored in the cache manifest.
+Credentials are read only from environment variables named in the source configuration; they are never stored in the cache manifest. Per-attachment size and count limits protect synchronization from unexpectedly large downloads.
 
 ## Historical Eclipse targets
 

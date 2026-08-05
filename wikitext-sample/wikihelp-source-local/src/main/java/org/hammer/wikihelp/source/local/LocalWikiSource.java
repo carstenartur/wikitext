@@ -1,5 +1,7 @@
 package org.hammer.wikihelp.source.local;
 
+import org.hammer.wikihelp.core.AttachmentSupport;
+import org.hammer.wikihelp.core.AttachmentRequest;
 import org.hammer.wikihelp.core.HttpTransport;
 import org.hammer.wikihelp.core.MarkupFormat;
 import org.hammer.wikihelp.core.PageSelection;
@@ -14,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.net.URI;
 
 public final class LocalWikiSource implements WikiSource {
     @Override
@@ -24,6 +27,27 @@ public final class LocalWikiSource implements WikiSource {
     @Override
     public boolean remote() {
         return false;
+    }
+
+    @Override
+    public List<AttachmentRequest> attachmentRequests(
+            SourceConfiguration configuration,
+            WikiPage page,
+            HttpTransport transport) throws Exception {
+        Path location = configuration.resolve("location").toAbsolutePath().normalize();
+        Path root = Files.isDirectory(location) ? location : location.getParent();
+        return WikiSource.super.attachmentRequests(configuration, page, transport).stream()
+                .filter(request -> allowedLocalReference(root, request.uri()))
+                .toList();
+    }
+
+    private boolean allowedLocalReference(Path root, URI uri) {
+        if (!"file".equalsIgnoreCase(uri.getScheme())) return true;
+        try {
+            return Path.of(uri).toAbsolutePath().normalize().startsWith(root);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     @Override
@@ -40,11 +64,12 @@ public final class LocalWikiSource implements WikiSource {
         if (Files.isDirectory(location)) {
             try (var stream = Files.walk(location)) {
                 files = stream.filter(Files::isRegularFile)
+                        .filter(file -> !AttachmentSupport.isLikelyBinary(file))
                         .sorted(Comparator.comparing(Path::toString))
                         .toList();
             }
         } else {
-            files = List.of(location);
+            files = AttachmentSupport.isLikelyBinary(location) ? List.of() : List.of(location);
         }
 
         String configuredFormat = configuration.get("format");
