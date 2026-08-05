@@ -1,24 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
-   <extension
-         point="org.eclipse.help.toc">
-       <toc
-              category="Eclipse4"
-              extradir="Eclipse4"
-              file="Eclipse4_toc.xml"
-              primary="true">
-      </toc>
-      <toc
-              category="GEF"
-              extradir="GEF"
-              file="GEF_toc.xml"
-              primary="true">
-      </toc>
-      <toc
-              category="JDT"
-              extradir="JDT"
-              file="JDT_toc.xml"
-              primary="true">
-      </toc>
-   </extension>
+    <extension point="org.eclipse.help.toc">
+        <toc category="WikiHelp"
+             file="wikihelp_toc.xml"
+             primary="true"/>
+    </extension>
 </plugin>

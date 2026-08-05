@@ -1,94 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Sample to show how to generate eclipse help plugin based on mediawiki content
-   Carsten Hammer
-   carsten.hammer@t-online.de
- -->
-<project name="mylyn-docs-wikitest" default="all">
-	<description>
-            Generate Eclipse help content from the mediawiki server
-		    http://www.mediawiki.org/wiki/api.php
-    </description>
-	<path id="wikitext.tasks.classpath">
-		<fileset dir="lib">
-			<include name="org.eclipse.mylyn.wikitext.*core*.jar" />
-		</fileset>
-	</path>
-	<property name="wikitext.standalone" value="" />
-	<!-- path to wikitext standalone package -->
-	<path id="wikitext.classpath">
-		<fileset dir="${wikitext.standalone}">
-			<include name="org.eclipse.mylyn.wikitext.*core*.jar" />
-		</fileset>
-	</path>
+    Wiki source synchronization and Eclipse Help generation are intentionally
+    separate stages. The Java source adapters populate a deterministic cache;
+    Mylyn WikiText then renders supported source markup into Eclipse Help.
+-->
+<project name="wikihelp" default="all">
+    <property name="wikihelp.mode" value="offline"/>
+    <property name="wikihelp.cache" location="target/wikihelp-cache"/>
 
-	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/internal/wikitext/mediawiki/core/tasks/tasks.properties" />
-	<taskdef classpathref="wikitext.tasks.classpath" resource="org/eclipse/mylyn/wikitext/core/util/anttask/tasks.properties" />
-	<!-- add the ant tasks from ant-contrib -->
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+    <path id="wikihelp.classpath">
+        <pathelement location="../wikihelp-core/target/classes"/>
+        <pathelement location="../wikihelp-source-local/target/classes"/>
+        <pathelement location="../wikihelp-source-mediawiki/target/classes"/>
+        <pathelement location="../wikihelp-source-gitlab/target/classes"/>
+        <pathelement location="../wikihelp-source-confluence/target/classes"/>
+        <pathelement location="../wikihelp-source-eclipsepedia/target/classes"/>
+        <pathelement location="../wikihelp-renderer-eclipse-help/target/classes"/>
+        <pathelement location="../wikihelp-cli/target/classes"/>
+    </path>
 
-	<target name="clean">
-		<delete failonerror="false">
-			<fileset dir="tmp" includes="**/*" />
-			<fileset file="build-doc-pull.xml" />
-			<fileset file="build-doc-pull-enhanced.xml" />
-		</delete>
-		<delete dir="nl" />
-	</target>
+    <target name="clean">
+        <delete dir="nl" failonerror="false"/>
+        <delete file="wikihelp_toc.xml" failonerror="false"/>
+        <delete file="target/wikihelp-render.xml" failonerror="false"/>
+    </target>
 
-	<target name="init" depends="clean">
-		<mkdir dir="tmp" />
-		<!--
-				There are two sources of the content of book.css:
-				
-				http://wiki.eclipse.org/index.php/MediaWiki:Common.css
-				http://wiki.eclipse.org/index.php/MediaWiki:Geshi.css
-				-->
-		<copy file="${basedir}/book.css" tofile="${basedir}/nl/en/book.css" overwrite="true" />
-		<copy file="${basedir}/book.css" tofile="${basedir}/nl/de/book.css" overwrite="true" />
-	</target>
+    <target name="sync" depends="clean"
+            description="Select source pages, synchronize their cache, and prepare the render plan">
+        <mkdir dir="target"/>
+        <java classname="org.hammer.wikihelp.cli.WikiHelpCli"
+              classpathref="wikihelp.classpath"
+              fork="true"
+              failonerror="true">
+            <sysproperty key="wikihelp.mode" value="${wikihelp.mode}"/>
+            <arg value="--config"/><arg file="wikihelp.properties"/>
+            <arg value="--cache"/><arg file="${wikihelp.cache}"/>
+            <arg value="--output"/><arg file="nl"/>
+            <arg value="--ant"/><arg file="target/wikihelp-render.xml"/>
+            <arg value="--toc"/><arg file="wikihelp_toc.xml"/>
+            <arg value="--css"/><arg file="book.css"/>
+        </java>
+    </target>
 
-	<!-- ================================= 
-		          target: pull  the page lists from wiki through the use of the mediawiki api         
-		          
-		          sample url:
-		          
-		          http://wiki.eclipse.org/api.php?action=query&list=categorymembers&cmtitle=Category:Mylyn&cmlimit=150&format=xml
-		             
-		          Dokumentation:
-		             
-		          http://www.mediawiki.org/wiki/API:Query   
-		             
-		         ================================= -->
-	<target name="pull">
-		<!-- -To be filled by pagelist2ant.xsl -->
-	</target>
+    <target name="render" depends="sync"
+            description="Render cached source pages as Eclipse Help">
+        <ant antfile="target/wikihelp-render.xml" inheritAll="true" target="render"/>
+    </target>
 
-	<!--
-			now run the stylesheet to create a new ant build file by using the xml list pulled in the step before to insert path entries. The ant build file is based on 
-			this build file but all path entries are removed and created again according to the lists.
-	-->
-	<target name="pullhelppagelistfromwiki" depends="init">
-		<xslt basedir="" in="build-doc.xml" out="build-doc-pull.xml" style="injectpulllist.xsl">
-			<factory name="net.sf.saxon.TransformerFactoryImpl" />
-			<classpath location="lib/saxon-9.1.0.6j.jar" />
-		</xslt>
-		<ant antfile="build-doc-pull.xml" target="pull" />
-		<!-- 
-		now we have lists of all pages for requested categories in files "tmp/*_list.xml" 
-		as next step we need to inject these pages that belong to a category and have to be pulled
-		from the wikiserver to the ant build file task
-		      -->
-		<xslt basedir="" in="build-doc-pull.xml" out="build-doc-pull-enhanced.xml" style="pagelist2ant.xsl">
-			<factory name="net.sf.saxon.TransformerFactoryImpl" />
-			<classpath location="lib/saxon-9.1.0.6j.jar" />
-		</xslt>
-		<ant antfile="build-doc-pull-enhanced.xml" target="generate-online-help" />
-	</target>
-
-	<target name="all" depends="pullhelppagelistfromwiki" />
-
-	<target name="generate-online-help" description="Generate Eclipse help from mediawiki source">
-		<!-- -To be filled by injectpulllist.xsl -->
-	</target>
+    <target name="all" depends="render"/>
 </project>

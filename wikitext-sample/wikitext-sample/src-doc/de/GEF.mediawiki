@@ -1,0 +1,21 @@
+= Dokumentation zum Eclipse Graphical Editing Framework =
+
+Dieses Hilfe-Plug-in zeigt, wie ausgewählte Wiki-Inhalte mit der modularen WikiHelp-Pipeline und Mylyn WikiText in Eclipse Help konvertiert werden.
+
+Die eingecheckte Quelle steht beispielhaft für eine Git-basierte Dokumentationsablage. Derselbe Renderer verarbeitet auch synchronisierte Seiten aus MediaWiki, GitLab Wiki, Confluence oder dem statischen Eclipsepedia-Archiv.
+
+== Aktuelle Ressourcen ==
+
+* [https://eclipse.dev/gef/ Eclipse-GEF-Dokumentation]
+* [https://projects.eclipse.org/projects/tools.gef Eclipse-GEF-Projektseite]
+* [https://wiki.eclipse.org/Category:GEF Archivierte Eclipsepedia-Kategorie GEF]
+
+== Beispiel bauen ==
+
+Der Selektor nimmt diese Seite auf, weil sie unten die Kategorie GEF trägt.
+
+<pre>
+mvn -B --no-transfer-progress verify --file wikitext-sample/pom.xml
+</pre>
+
+[[Category:GEF]]
